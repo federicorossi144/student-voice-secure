@@ -1,29 +1,19 @@
-import { useContract, useContractRead, useContractWrite, useAccount } from 'wagmi';
-import { useFHE } from '@fhevm/solidity';
+import { useContractRead, useContractWrite, useAccount } from 'wagmi';
 import StudentVotingABI from '../contracts/StudentVoting.json';
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000';
 
 export const useStudentVotingContract = () => {
   const { address } = useAccount();
-  const { encrypt, decrypt } = useFHE();
-
-  const contract = useContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: StudentVotingABI.abi,
-  });
 
   return {
-    contract,
     address,
-    encrypt,
-    decrypt,
+    contractAddress: CONTRACT_ADDRESS as `0x${string}`,
+    abi: StudentVotingABI.abi,
   };
 };
 
 export const useElections = () => {
-  const { contract } = useStudentVotingContract();
-
   // This would need to be implemented based on your contract's structure
   // For now, we'll return mock data
   return {
@@ -34,11 +24,11 @@ export const useElections = () => {
 };
 
 export const useCreateElection = () => {
-  const { contract } = useStudentVotingContract();
+  const { contractAddress, abi } = useStudentVotingContract();
 
   const { write: createElection, isLoading, error } = useContractWrite({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: StudentVotingABI.abi,
+    address: contractAddress,
+    abi: abi,
     functionName: 'createElection',
   });
 
@@ -50,11 +40,11 @@ export const useCreateElection = () => {
 };
 
 export const useAddCandidate = () => {
-  const { contract } = useStudentVotingContract();
+  const { contractAddress, abi } = useStudentVotingContract();
 
   const { write: addCandidate, isLoading, error } = useContractWrite({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: StudentVotingABI.abi,
+    address: contractAddress,
+    abi: abi,
     functionName: 'addCandidate',
   });
 
@@ -66,18 +56,19 @@ export const useAddCandidate = () => {
 };
 
 export const useCastVote = () => {
-  const { contract, encrypt } = useStudentVotingContract();
+  const { contractAddress, abi } = useStudentVotingContract();
 
   const { write: castVote, isLoading, error } = useContractWrite({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: StudentVotingABI.abi,
+    address: contractAddress,
+    abi: abi,
     functionName: 'castVote',
   });
 
   const castEncryptedVote = async (electionId: number, candidateId: number) => {
     try {
-      // Encrypt the vote (1 for vote, 0 for no vote)
-      const encryptedVote = await encrypt(1);
+      // For now, we'll use a placeholder for encrypted vote
+      // In a real implementation, this would be handled by FHE
+      const encryptedVote = '0x0000000000000000000000000000000000000000000000000000000000000001';
       
       // Cast the encrypted vote
       await castVote({
@@ -97,11 +88,11 @@ export const useCastVote = () => {
 };
 
 export const useRegisterStudent = () => {
-  const { contract } = useStudentVotingContract();
+  const { contractAddress, abi } = useStudentVotingContract();
 
   const { write: registerStudent, isLoading, error } = useContractWrite({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: StudentVotingABI.abi,
+    address: contractAddress,
+    abi: abi,
     functionName: 'registerStudent',
   });
 
@@ -114,11 +105,12 @@ export const useRegisterStudent = () => {
 
 export const useStudentInfo = (studentAddress?: string) => {
   const { address } = useAccount();
+  const { contractAddress, abi } = useStudentVotingContract();
   const targetAddress = studentAddress || address;
 
   const { data: studentInfo, isLoading, error } = useContractRead({
-    address: CONTRACT_ADDRESS as `0x${string}`,
-    abi: StudentVotingABI.abi,
+    address: contractAddress,
+    abi: abi,
     functionName: 'getStudentInfo',
     args: targetAddress ? [targetAddress] : undefined,
     enabled: !!targetAddress,
